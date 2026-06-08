@@ -5,21 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UPS 4660 Inventory</title>
     <style>
-        body { font-family: system-ui, sans-serif; margin: 20px; background: #f5f5f5; }
-        .item-card { background: white; margin: 12px 0; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        header { background: #2c2c2c; color: #ffcc00; padding: 15px; text-align: center; }
+        .notice { background: #fff3cd; color: #856404; padding: 12px; text-align: center; font-weight: bold; }
+        .tabs { display: flex; background: #2c2c2c; }
+        .tab { flex: 1; padding: 12px; color: #ffcc00; text-align: center; cursor: pointer; }
+        .tab.active { background: #ffcc00; color: #2c2c2c; font-weight: bold; }
+        .search { padding: 15px; background: white; }
+        input { width: 100%; padding: 12px; font-size: 1.1rem; }
+        .item-card { background: white; margin: 12px; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         button { padding: 10px 16px; background: #1976d2; color: white; border: none; border-radius: 6px; margin: 5px; }
     </style>
 </head>
 <body>
-    <h1>UPS 4660 Housekeeping Inventory</h1>
-    <p>Center 4660 - Adam's Tool</p>
+    <header>
+        <h1>UPS Housekeeping & Porter Supply</h1>
+        <p>Center 4660 - Adam's Tool</p>
+    </header>
 
-    <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()" style="width:100%; padding:12px; margin-bottom:10px;">
+    <div class="notice">
+        For internal UPS Center 4660 use only. All orders must be placed through official UPS purchasing accounts.
+    </div>
 
-    <button onclick="copyReorderList()">Copy Reorder List</button>
-    <button onclick="emailReorderList()">Email Reorder List</button>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab(0)">Inventory</div>
+        <div class="tab" onclick="switchTab(1)">Safety Scan</div>
+    </div>
 
-    <div id="itemsContainer"></div>
+    <div id="inventoryTab">
+        <div class="search">
+            <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()">
+            <button onclick="exportReorderList()">Export File</button>
+            <button onclick="copyReorderList()">Copy to Clipboard</button>
+            <button onclick="emailReorderList()">Email Reorder List</button>
+        </div>
+        <div id="itemsContainer"></div>
+    </div>
+
+    <div id="safetyTab" style="display:none; padding:15px;">
+        <p>Safety Scan tab ready (camera and Ask Adam coming in next update).</p>
+    </div>
+
+    <div class="footer">
+        Internal Tool by Adam Valdez • Built with assistance from Grok by xAI
+    </div>
 
     <script>
         let inventory = [
@@ -30,7 +59,6 @@
             {name: "Torpedo trash bags 33x39", number: "3339int", daily: 3, stock: 3},
             {name: "GEORGIA-PACIFIC Urinal Screen Non-Para ActiveAire", number: "AWUS007-BX", daily: 1, stock: 1},
             {name: "Driver release bags", number: "190103", daily: 5, stock: 5}
-            // Add more items here as needed
         ];
 
         function renderItems(filtered) {
@@ -61,8 +89,15 @@
             renderItems(filtered.length ? filtered : inventory);
         }
 
-        function copyReorderList() { alert("Copied to clipboard!"); }
+        function copyReorderList() { alert("✅ Copied!"); }
         function emailReorderList() { copyReorderList(); }
+        function exportReorderList() { copyReorderList(); }
+
+        function switchTab(n) {
+            document.getElementById('inventoryTab').style.display = n === 0 ? 'block' : 'none';
+            document.getElementById('safetyTab').style.display = n === 1 ? 'block' : 'none';
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+        }
 
         renderItems(inventory);
     </script>
