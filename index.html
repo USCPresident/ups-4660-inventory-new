@@ -32,8 +32,8 @@
     <div class="search">
         <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()">
         <button onclick="exportReorderList()">Export File</button>
-        <button onclick="emailReorderList()">Email Selected</button>
-        <button onclick="copyReorderList()">Copy to Clipboard</button>
+        <button onclick="copyReorderList()">Copy to Clipboard (Recommended)</button>
+        <button onclick="emailReorderList()">Try Email</button>
     </div>
 
     <div id="itemsContainer"></div>
@@ -120,6 +120,23 @@
             return inventory.filter(item => (item.stock / item.daily) < 14);
         }
 
+        function copyReorderList() {
+            const urgent = getUrgentItems();
+            let text = "UPS 4660 Urgent Reorder List\nDate: " + new Date().toLocaleDateString() + "\n\n";
+            urgent.forEach(item => {
+                const days = (item.stock / item.daily).toFixed(1);
+                text += `${item.name}\nItem #: ${item.number}\nStock: ${item.stock} | Days Left: ~${days}\n\n`;
+            });
+            text += "Please order through official UPS accounts.";
+            navigator.clipboard.writeText(text).then(() => {
+                alert("✅ Copied to clipboard!\n\nOpen Outlook (web or app) → New Email → Paste into the body.");
+            });
+        }
+
+        function emailReorderList() {
+            copyReorderList(); // fallback to copy
+        }
+
         function exportReorderList() {
             const urgent = getUrgentItems();
             let text = "UPS 4660 Reorder List\nDate: " + new Date().toLocaleDateString() + "\n\n";
@@ -132,27 +149,6 @@
             a.href = URL.createObjectURL(blob);
             a.download = 'UPS_4660_Reorder_List.txt';
             a.click();
-        }
-
-        function emailReorderList() {
-            const urgent = getUrgentItems();
-            let body = "UPS 4660 Urgent Reorder List\nDate: " + new Date().toLocaleDateString() + "\n\n";
-            urgent.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                body += `${item.name}\nItem #: ${item.number}\nStock: ${item.stock} | Days Left: ~${days}\n\n`;
-            });
-            body += "\nPlease order through official UPS accounts.";
-            window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS 4660 Urgent Reorder List&body=${encodeURIComponent(body)}`;
-        }
-
-        function copyReorderList() {
-            const urgent = getUrgentItems();
-            let text = "UPS 4660 Urgent Reorder List\nDate: " + new Date().toLocaleDateString() + "\n\n";
-            urgent.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                text += `${item.name} - Item #: ${item.number} - Stock: ${item.stock} - Days Left: ~${days}\n`;
-            });
-            navigator.clipboard.writeText(text).then(() => alert("Copied! Paste into your Outlook email."));
         }
 
         loadStock();
