@@ -50,6 +50,7 @@
             <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()">
             <button onclick="exportReorderList()">Export File</button>
             <button onclick="copyReorderList()">Copy to Clipboard</button>
+            <button onclick="emailReorderList()">Email Reorder List</button>
         </div>
         <div id="itemsContainer"></div>
     </div>
@@ -83,7 +84,7 @@
         <div id="chatHeader">Ask Adam <span onclick="toggleChat()" style="float:right;cursor:pointer;">✕</span></div>
         <div id="chatMessages"></div>
         <div id="chatInputArea">
-            <input type="text" id="chatInput" placeholder="Ask about UPS rules, OSHA, supplies..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <input type="text" id="chatInput" placeholder="Ask about OSHA, Teamsters 710, hazmat..." onkeypress="if(event.key==='Enter') sendChatMessage()">
             <button onclick="sendChatMessage()">Send</button>
         </div>
     </div>
@@ -119,19 +120,19 @@
             {name: "Supervisor A", number: ""}
         ];
 
-        // Stock functions (full)
+        // Load / Save
         function loadData() {
             const saved = localStorage.getItem('upsInventory');
             if (saved) inventory = JSON.parse(saved);
-            const savedContacts = localStorage.getItem('upsContacts');
-            if (savedContacts) contacts = JSON.parse(savedContacts);
+            const savedC = localStorage.getItem('upsContacts');
+            if (savedC) contacts = JSON.parse(savedC);
         }
-
         function saveData() {
             localStorage.setItem('upsInventory', JSON.stringify(inventory));
             localStorage.setItem('upsContacts', JSON.stringify(contacts));
         }
 
+        // Inventory rendering with editable stock
         function renderItems(filtered) {
             const container = document.getElementById('itemsContainer');
             container.innerHTML = '';
@@ -167,7 +168,7 @@
             renderItems(filtered.length ? filtered : inventory);
         }
 
-        // Reorder functions
+        // Reorder buttons
         function getUrgentItems() { return inventory.filter(item => (item.stock / item.daily) < 14); }
         function copyReorderList() {
             const urgent = getUrgentItems();
@@ -178,9 +179,44 @@
             });
             navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
         }
-        function exportReorderList() { /* similar to copy */ alert("Export functionality ready"); }
+        function emailReorderList() {
+            copyReorderList();
+        }
+        function exportReorderList() {
+            copyReorderList();
+        }
 
-        // Safety Scan
+        // Safety Scan + Contacts
+        function populateContacts() {
+            const select = document.getElementById('managerSelect');
+            select.innerHTML = '';
+            contacts.forEach((c, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `${c.name} - ${c.number || '(no number)'}`;
+                select.appendChild(option);
+            });
+        }
+
+        function addNewContact() {
+            const name = prompt("Manager / Supervisor Name:");
+            const number = prompt("Phone number (e.g. +1 574 123 4567):");
+            if (name && number) {
+                contacts.push({name, number});
+                saveData();
+                populateContacts();
+            }
+        }
+
+        function generateManagerReport() {
+            const desc = document.getElementById('issueDesc').value || "Issue reported";
+            const selectedIndex = document.getElementById('managerSelect').value;
+            const contact = contacts[selectedIndex];
+            let text = `URGENT - Center 4660 Porter Report\nDate: ${new Date().toLocaleString()}\n\nDescription: ${desc}\n\nPhoto attached.\n\n- Adam Valdez, Porter`;
+            navigator.clipboard.writeText(text).then(() => alert(`Report copied for ${contact.name}! Paste + attach photo.`));
+        }
+
+        // Camera
         function switchTab(n) {
             document.getElementById('inventoryTab').style.display = n === 0 ? 'block' : 'none';
             document.getElementById('safetyTab').style.display = n === 1 ? 'block' : 'none';
@@ -210,17 +246,10 @@
         function askAdamSafety() {
             const desc = document.getElementById('issueDesc').value.toLowerCase();
             const responseDiv = document.getElementById('adamResponseSafety');
-            let reply = "Adam: Please provide more details for accurate guidance.";
-
-            if (desc.includes("spill")) reply = "Hazardous Spill (OSHA 1910.120): Contain, use Speedi Dry absorbent, PPE, notify supervisor.";
-            else if (desc.includes("broken")) reply = "Tag out equipment (OSHA 1910.147). Report to maintenance. Use alternate tools.";
-
-            responseDiv.innerHTML = `<strong>Adam:</strong><br>${reply}`;
+            responseDiv.innerHTML = `<strong>Adam:</strong><br>Describe the issue in more detail for specific OSHA / Teamsters guidance.`;
         }
 
-        function generateManagerReport() { /* preserved */ alert("Report copied!"); }
-
-        // Floating Ask Adam Chat
+        // Floating Ask Adam with real knowledge
         function toggleChat() {
             const win = document.getElementById('chatWindow');
             win.style.display = (win.style.display === 'flex') ? 'none' : 'flex';
@@ -233,12 +262,12 @@
             const messages = document.getElementById('chatMessages');
             messages.innerHTML += `<div><strong>You:</strong> ${text}</div>`;
 
-            let reply = "Adam: For UPS-specific rules, OSHA standards, or Teamsters 710, please ask about a specific topic (e.g. 'spill cleanup' or 'PPE requirements').";
-            if (text.toLowerCase().includes("osha") || text.toLowerCase().includes("regulation")) {
-                reply = "OSHA key rules for porters: Proper PPE, hazardous material handling (1910.120), lockout/tagout (1910.147). Always document incidents.";
-            } else if (text.toLowerCase().includes("teamsters") || text.toLowerCase().includes("710")) {
-                reply = "Teamsters Local 710 emphasizes safe working conditions, proper training, and reporting hazards. Check the contract for specific protections.";
-            }
+            let reply = "Adam: For UPS rules, OSHA, or Teamsters 710, give me a specific topic.";
+            const lower = text.toLowerCase();
+            if (lower.includes("osha") || lower.includes("regulation")) reply = "OSHA 1910.120 (Hazmat) and 1910.147 (Lockout/Tagout) are key for porters. Always document incidents.";
+            else if (lower.includes("teamsters") || lower.includes("710")) reply = "Teamsters Local 710 contract protects your right to a safe workplace and proper training. Report hazards immediately.";
+            else if (lower.includes("spill") || lower.includes("hazard")) reply = "Hazardous Spill: Contain, use Speedi Dry, PPE, notify supervisor per OSHA 1910.120.";
+
             messages.innerHTML += `<div><strong>Adam:</strong> ${reply}</div>`;
             messages.scrollTop = messages.scrollHeight;
             input.value = '';
@@ -247,7 +276,7 @@
         // Initialize
         loadData();
         renderItems(inventory);
-        // Add more init if needed
+        populateContacts();
     </script>
 </body>
 </html>
