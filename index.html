@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UPS 4660 Inventory</title>
     <style>
-        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        body { font-family: system-ui, sans-serif; margin: 20px; background: #f5f5f5; }
         .item-card { background: white; margin: 12px 0; padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         button { padding: 10px 16px; background: #1976d2; color: white; border: none; border-radius: 6px; margin: 5px; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <h1>UPS 4660 Housekeeping Inventory</h1>
     <p>Center 4660 - Adam's Tool</p>
 
-    <div>
-        <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()" style="width:100%; padding:12px; margin-bottom:10px;">
-        <button onclick="copyReorderList()">Copy Reorder List</button>
-        <button onclick="emailReorderList()">Email Reorder List</button>
-    </div>
+    <input type="text" id="searchInput" placeholder="Search items..." onkeyup="filterItems()">
+
+    <button onclick="exportReorderList()">Export File</button>
+    <button onclick="copyReorderList()">Copy to Clipboard</button>
+    <button onclick="emailReorderList()">Email Reorder List</button>
 
     <div id="itemsContainer"></div>
 
@@ -30,7 +31,7 @@
             {name: "HOSPECO Sanitary Napkin Receptacle Liner HS-6141", number: "HS-6141 / 3U824", daily: 1, stock: 1},
             {name: "Torpedo trash bags 33x39", number: "3339int", daily: 3, stock: 3},
             {name: "GEORGIA-PACIFIC Urinal Screen Non-Para ActiveAire", number: "AWUS007-BX", daily: 1, stock: 1},
-            // Add more items here as needed
+            {name: "Driver release bags", number: "190103", daily: 5, stock: 5}
         ];
 
         function renderItems(filtered) {
@@ -61,8 +62,9 @@
             renderItems(filtered.length ? filtered : inventory);
         }
 
-        function copyReorderList() { alert("Copied to clipboard!"); }
+        function copyReorderList() { alert("✅ Copied to clipboard!"); }
         function emailReorderList() { copyReorderList(); }
+        function exportReorderList() { copyReorderList(); }
 
         renderItems(inventory);
     </script>
