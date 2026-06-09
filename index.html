@@ -9,18 +9,18 @@
         header { background:#2c2c2c; color:#ffcc00; padding:20px; text-align:center; }
         .notice { background:#fff3cd; color:#856404; padding:14px; text-align:center; font-weight:bold; }
         .tabs { display:flex; background:#2c2c2c; }
-        .tab { flex:1; padding:16px; color:#ffcc00; text-align:center; cursor:pointer; font-size:1.1rem; }
+        .tab { flex:1; padding:16px; color:#ffcc00; text-align:center; cursor:pointer; font-size:1.05rem; }
         .tab.active { background:#ffcc00; color:#2c2c2c; font-weight:bold; }
-        .search { padding:15px; background:white; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-        input[type="text"] { flex:1; min-width:220px; padding:14px; font-size:1.1rem; box-sizing:border-box; }
-        .item-card { background:white; margin:12px; padding:18px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
+        .search { padding:12px; background:white; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+        input[type="text"] { flex:1; min-width:180px; padding:12px; font-size:1.05rem; box-sizing:border-box; }
+        .item-card { background:white; margin:10px; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
         .item-card.urgent { border-left-color: #f44336; }
-        .stock-input { width:90px !important; text-align:center; font-size:1.2rem; padding:10px; border:2px solid #ccc; border-radius:6px; }
-        button { padding:14px 18px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; }
+        .stock-input { width:85px !important; text-align:center; font-size:1.1rem; padding:8px; border:2px solid #ccc; border-radius:6px; }
+        button { padding:12px 16px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; flex:1; min-width:140px; }
         button:hover { background:#1565c0; }
-        .chat-bubble { position:fixed; bottom:25px; right:25px; background:#1976d2; color:white; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
-        img { max-width:100%; max-height:200px; height:auto; border-radius:8px; margin-top:10px; object-fit:contain; }
-        footer { text-align:center; padding:20px; color:#666; font-size:0.95rem; }
+        .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
+        img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
+        footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
 </head>
 <body>
@@ -50,11 +50,7 @@
 
     <div id="safetyTab" style="display:none; padding:20px;">
         <h2>Safety Scan</h2>
-        <button onclick="startCamera()" style="margin:10px 0;">📷 Open Camera</button>
-        <video id="video" width="100%" height="auto" autoplay playsinline style="display:none; border-radius:8px;"></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-        <button onclick="takePhoto()" style="display:none;" id="captureBtn">Capture Photo</button>
-        <p id="safetyNote">For spills, hazards, or procedures. Ask Adam below for guidance.</p>
+        <p>Camera + Ask Adam coming next update.</p>
     </div>
 
     <div class="chat-bubble" onclick="toggleChat()">💬</div>
@@ -99,7 +95,7 @@
             if (saved) {
                 const savedData = JSON.parse(saved);
                 inventory.forEach((item, i) => {
-                    if (savedData[i] && savedData[i].stock !== undefined) item.stock = savedData[i].stock;
+                    if (savedData[i]) item.stock = savedData[i].stock;
                 });
             }
         }
@@ -136,10 +132,7 @@
 
         function filterItems() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = inventory.filter(item => 
-                item.name.toLowerCase().includes(term) || 
-                item.number.toLowerCase().includes(term)
-            );
+            const filtered = inventory.filter(item => item.name.toLowerCase().includes(term) || item.number.toLowerCase().includes(term));
             renderItems(filtered.length ? filtered : inventory);
         }
 
@@ -147,16 +140,16 @@
             let text = "UPS 4660 Reorder List\n\n";
             inventory.forEach(item => {
                 const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) text += `${item.name} (${item.number}) - Stock: ${item.stock} (~${days} days left)\n`;
+                if (days < 14) text += `${item.name} (${item.number}) - Stock: ${item.stock} (~${days} days)\n`;
             });
-            navigator.clipboard.writeText(text).then(() => alert("✅ Reorder list copied to clipboard!"));
+            navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
         }
 
         function emailReorderList() {
-            let body = "Please order the following urgent items:\n\n";
+            let body = "Please order the following:\n\n";
             inventory.forEach(item => {
                 const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days)\n`;
+                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days left)\n`;
             });
             window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS%204660%20Reorder%20List&body=${encodeURIComponent(body)}`;
         }
@@ -168,9 +161,8 @@
                 if (days < 14) text += `${item.name} | ${item.number} | Stock: ${item.stock} | Days Left: ~${days}\n`;
             });
             const blob = new Blob([text], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = 'UPS4660_Reorder_List.txt';
             a.click();
         }
@@ -182,38 +174,16 @@
         }
 
         function toggleChat() {
-            const q = prompt("Ask Adam (OSHA, Teamsters 710, spills, safety, procedures):");
+            const q = prompt("Ask Adam (OSHA, Teamsters 710, spills, safety):");
             if (!q) return;
             let reply = "Understood. Can you give more details?";
             const lower = q.toLowerCase();
-            if (lower.includes("spill") || lower.includes("clean")) reply = "Use Speedi-Dry absorbent, gloves, eye protection. Follow OSHA 1910.120 Hazmat. Ventilate area and report to supervisor.";
-            if (lower.includes("osha")) reply = "Key standards: 1910.120 Hazmat, 1910.147 Lockout/Tagout, PPE requirements. Always check the UPS safety manual.";
-            if (lower.includes("teamsters") || lower.includes("710")) reply = "Local 710 contract covers seniority, safety rules, hours, and protections. Refer to your printed contract book.";
+            if (lower.includes("spill") || lower.includes("clean")) reply = "Use Speedi-Dry, gloves, eye protection. Follow OSHA 1910.120.";
+            if (lower.includes("osha")) reply = "Check UPS safety manual for PPE and hazmat rules.";
+            if (lower.includes("teamsters") || lower.includes("710")) reply = "Refer to your Local 710 contract book.";
             alert("Ask Adam: " + reply);
         }
 
-        let stream;
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-                stream = s;
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                video.style.display = 'block';
-                document.getElementById('captureBtn').style.display = 'block';
-            }).catch(() => alert("Camera access denied or not available on this device."));
-        }
-
-        function takePhoto() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            canvas.style.display = 'block';
-            alert("Photo captured! (You can add save/send functionality later)");
-        }
-
-        // Initial load
         loadStock();
         renderItems(inventory);
     </script>
