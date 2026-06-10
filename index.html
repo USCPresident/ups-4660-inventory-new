@@ -16,11 +16,12 @@
         .item-card { background:white; margin:10px; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
         .item-card.urgent { border-left-color: #f44336; }
         .stock-input { width:85px !important; text-align:center; font-size:1.1rem; padding:8px; border:2px solid #ccc; border-radius:6px; }
-        button { padding:12px 16px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; flex:1; min-width:140px; }
+        button { padding:12px 16px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; min-width:140px; }
         button:hover { background:#1565c0; }
         .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
         img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
+        .contact-item { margin:10px 0; padding:10px; background:white; border-radius:8px; }
     </style>
 </head>
 <body>
@@ -50,7 +51,14 @@
 
     <div id="safetyTab" style="display:none; padding:20px;">
         <h2>Safety Scan</h2>
-        <p>Camera + Ask Adam coming next update.</p>
+        <button onclick="startCamera()" style="margin:10px 0;">📷 Open Camera</button>
+        <video id="video" width="100%" height="auto" autoplay playsinline style="display:none; border-radius:8px;"></video>
+        <canvas id="canvas" style="display:none; border-radius:8px;"></canvas>
+        <button onclick="takePhoto()" style="display:none;" id="captureBtn">Capture Photo</button>
+
+        <h3 style="margin-top:20px;">Manager Contacts</h3>
+        <div id="contactsList"></div>
+        <button onclick="addContact()">+ Add New Contact</button>
     </div>
 
     <div class="chat-bubble" onclick="toggleChat()">💬</div>
@@ -90,18 +98,26 @@
             {name: "Clear tape 8934 48mm", number: "8934", daily: 2, stock: 8}
         ];
 
-        function loadStock() {
-            const saved = localStorage.getItem('ups4660Inventory');
-            if (saved) {
-                const savedData = JSON.parse(saved);
+        let contacts = [
+            {name: "Manager 1", phone: "574-555-1234"},
+            {name: "Supervisor A", phone: "574-555-5678"}
+        ];
+
+        function loadData() {
+            const savedStock = localStorage.getItem('ups4660Inventory');
+            if (savedStock) {
+                const savedData = JSON.parse(savedStock);
                 inventory.forEach((item, i) => {
                     if (savedData[i]) item.stock = savedData[i].stock;
                 });
             }
+            const savedContacts = localStorage.getItem('ups4660Contacts');
+            if (savedContacts) contacts = JSON.parse(savedContacts);
         }
 
-        function saveStock() {
+        function saveData() {
             localStorage.setItem('ups4660Inventory', JSON.stringify(inventory));
+            localStorage.setItem('ups4660Contacts', JSON.stringify(contacts));
         }
 
         function renderItems(filtered) {
@@ -126,7 +142,7 @@
 
         function updateStock(i, val) {
             inventory[i].stock = parseFloat(val) || 0;
-            saveStock();
+            saveData();
             renderItems(inventory);
         }
 
@@ -174,18 +190,79 @@
         }
 
         function toggleChat() {
-            const q = prompt("Ask Adam (OSHA, Teamsters 710, spills, safety):");
+            const q = prompt("Ask Adam (OSHA, Teamsters 710, spills, safety, procedures):");
             if (!q) return;
             let reply = "Understood. Can you give more details?";
             const lower = q.toLowerCase();
-            if (lower.includes("spill") || lower.includes("clean")) reply = "Use Speedi-Dry, gloves, eye protection. Follow OSHA 1910.120.";
-            if (lower.includes("osha")) reply = "Check UPS safety manual for PPE and hazmat rules.";
-            if (lower.includes("teamsters") || lower.includes("710")) reply = "Refer to your Local 710 contract book.";
+            if (lower.includes("spill") || lower.includes("clean")) reply = "Use Speedi-Dry absorbent. Wear gloves and eye protection. Follow OSHA 1910.120 Hazmat. Ventilate and report.";
+            if (lower.includes("osha")) reply = "Key standards: 1910.120 Hazmat, 1910.147 Lockout/Tagout, PPE. Check UPS safety manual.";
+            if (lower.includes("teamsters") || lower.includes("710")) reply = "Local 710 contract covers seniority, safety rules, hours. Check your contract book.";
             alert("Ask Adam: " + reply);
         }
 
-        loadStock();
+        let stream;
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
+                stream = s;
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                video.style.display = 'block';
+                document.getElementById('captureBtn').style.display = 'block';
+            }).catch(() => alert("Camera access denied or not available."));
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.style.display = 'block';
+            alert("Photo captured! You can now describe the issue to Ask Adam.");
+        }
+
+        function renderContacts() {
+            const list = document.getElementById('contactsList');
+            list.innerHTML = '';
+            contacts.forEach((contact, i) => {
+                const div = document.createElement('div');
+                div.className = 'contact-item';
+                div.innerHTML = `
+                    <strong>${contact.name}</strong><br>
+                    <input type="tel" value="${contact.phone}" onchange="updateContact(${i}, this.value)" placeholder="Phone number">
+                    <button onclick="sendToContact(${i})">Send Message</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateContact(i, phone) {
+            contacts[i].phone = phone;
+            saveData();
+        }
+
+        function addContact() {
+            const name = prompt("Manager/Supervisor Name:");
+            if (!name) return;
+            const phone = prompt("Phone number:");
+            if (phone) {
+                contacts.push({name, phone});
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function sendToContact(i) {
+            const contact = contacts[i];
+            const msg = prompt("Message to send to " + contact.name + ":");
+            if (msg) {
+                window.location.href = `sms:${contact.phone}?body=${encodeURIComponent(msg)}`;
+            }
+        }
+
+        loadData();
         renderItems(inventory);
+        renderContacts();
     </script>
 </body>
 </html>
