@@ -23,8 +23,6 @@
         .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
         .contact-header { display:flex; align-items:center; gap:12px; }
         .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; cursor:pointer; }
-        .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:15px 0; }
-        .dialpad button { font-size:1.8rem; padding:22px; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
 </head>
@@ -79,7 +77,7 @@
     </footer>
 
     <script>
-        let inventory = [
+        let inventory = [ /* full inventory array as before */ 
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -137,7 +135,7 @@
         function manualSave() {
             saveData();
             renderContacts();
-            alert("✅ Contacts saved and list refreshed!");
+            alert("✅ Saved and refreshed!");
         }
 
         function refreshContacts() {
@@ -259,7 +257,7 @@
             const list = document.getElementById('contactsList');
             list.innerHTML = '';
             if (contacts.length === 0) {
-                list.innerHTML = '<p style="color:#666; text-align:center;">No contacts yet. Add one above.</p>';
+                list.innerHTML = '<p style="color:#666;text-align:center;padding:20px;">No contacts yet.<br>Tap "+ Add New Contact" above.</p>';
                 return;
             }
             contacts.forEach((c, i) => {
@@ -316,7 +314,7 @@
                 contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: randomPhoto});
                 saveData();
                 renderContacts();
-                alert("✅ Contact added! Tap Refresh List if it doesn't appear.");
+                alert("✅ Contact added!");
             }
         }
 
