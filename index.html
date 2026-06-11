@@ -19,10 +19,8 @@
         button { padding:16px 20px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1.05rem; min-width:140px; margin:6px 4px; }
         button:active { background:#1565c0; }
         .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
-        img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
+        img { max-width:100%; max-height:220px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
         .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
-        .contact-header { display:flex; align-items:center; gap:12px; }
-        .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; cursor:pointer; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
 </head>
@@ -104,16 +102,11 @@
 
         let contacts = [];
         let stream = null;
-
-        const defaultPhotos = [
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/UPS_Logo.svg/800px-UPS_Logo.svg.png",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/UPS_truck.jpg/800px-UPS_truck.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/UPS_Brown_Uniform.jpg/800px-UPS_Brown_Uniform.jpg"
-        ];
+        let capturedPhoto = null;
 
         function loadData() {
-            const savedC = localStorage.getItem('ups4660Contacts');
-            if (savedC) contacts = JSON.parse(savedC);
+            const saved = localStorage.getItem('ups4660Contacts');
+            if (saved) contacts = JSON.parse(saved);
         }
 
         function saveData() {
@@ -128,7 +121,6 @@
 
         function refreshContacts() {
             renderContacts();
-            alert("List refreshed!");
         }
 
         function renderItems(filtered) {
@@ -208,6 +200,49 @@
             if (lower.includes("osha")) reply = "Check 1910.120 Hazmat, PPE, Lockout/Tagout.";
             if (lower.includes("teamsters")) reply = "Local 710 contract - seniority & safety rules.";
             alert("Ask Adam: " + reply);
+        }
+
+        function toggleCamera() {
+            const video = document.getElementById('video');
+            const btn = document.getElementById('cameraBtn');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'none';
+                btn.textContent = '📷 Open Camera';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    document.getElementById('captureBtn').style.display = 'block';
+                    btn.textContent = '❌ Close Camera';
+                }).catch(() => alert("Camera access denied or not available on this device."));
+            }
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            canvas.style.display = 'block';
+            const msg = prompt("Add message for this photo (e.g. 'Hazardous spill in breakroom'):");
+            if (msg) {
+                const contactIndex = prompt("Enter contact number (0 for first contact, etc):");
+                if (contactIndex !== null) {
+                    const i = parseInt(contactIndex);
+                    if (contacts[i]) {
+                        const smsBody = msg + "\n\n[Photo attached - describe issue here]";
+                        window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(smsBody)}`;
+                    } else {
+                        alert("Contact not found. Photo captured.");
+                    }
+                }
+            }
         }
 
         function renderContacts() {
