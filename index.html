@@ -16,14 +16,15 @@
         .item-card { background:white; margin:10px; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
         .item-card.urgent { border-left-color: #f44336; }
         .stock-input { width:85px !important; text-align:center; font-size:1.1rem; padding:8px; border:2px solid #ccc; border-radius:6px; }
-        button { padding:14px 18px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; min-width:140px; margin:4px 2px; }
+        button { padding:16px 20px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1.05rem; min-width:140px; margin:6px 4px; }
         button:active { background:#1565c0; }
-        .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
+        .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
         img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
-        .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); display:flex; gap:12px; align-items:center; }
+        .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+        .contact-header { display:flex; align-items:center; gap:12px; }
         .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; }
-        .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin:15px 0; }
-        .dialpad button { font-size:1.8rem; padding:20px; }
+        .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:15px 0; }
+        .dialpad button { font-size:1.8rem; padding:22px; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
 </head>
@@ -34,7 +35,7 @@
     </header>
 
     <div class="notice">
-        For internal UPS Center 4660 use only. All orders must be placed through official UPS purchasing accounts (Grainger / Choctaw Kaul / Staples).
+        For internal UPS Center 4660 use only. All orders must be placed through official UPS purchasing accounts.
     </div>
 
     <div class="tabs">
@@ -61,7 +62,7 @@
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()" style="width:100%; margin:15px 0;">+ Add New Contact</button>
+        <button onclick="addContact()" style="width:100%; margin:15px 0 10px;">+ Add New Contact</button>
 
         <h4>Quick Dial Pad</h4>
         <div class="dialpad" id="dialpad"></div>
@@ -114,12 +115,10 @@
             const savedStock = localStorage.getItem('ups4660Inventory');
             if (savedStock) {
                 const savedData = JSON.parse(savedStock);
-                inventory.forEach((item, i) => {
-                    if (savedData[i]) item.stock = savedData[i].stock;
-                });
+                inventory.forEach((item, i) => { if (savedData[i]) item.stock = savedData[i].stock; });
             }
-            const savedContacts = localStorage.getItem('ups4660Contacts');
-            if (savedContacts) contacts = JSON.parse(savedContacts);
+            const savedC = localStorage.getItem('ups4660Contacts');
+            if (savedC) contacts = JSON.parse(savedC);
         }
 
         function saveData() {
@@ -155,10 +154,7 @@
 
         function filterItems() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = inventory.filter(item => 
-                item.name.toLowerCase().includes(term) || 
-                item.number.toLowerCase().includes(term)
-            );
+            const filtered = inventory.filter(item => item.name.toLowerCase().includes(term) || item.number.toLowerCase().includes(term));
             renderItems(filtered.length ? filtered : inventory);
         }
 
@@ -168,23 +164,23 @@
                 const days = (item.stock / item.daily).toFixed(1);
                 if (days < 14) text += `${item.name} (${item.number}) - Stock: ${item.stock} (~${days} days)\n`;
             });
-            navigator.clipboard.writeText(text).then(() => alert("✅ Copied to clipboard!"));
+            navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
         }
 
         function emailReorderList() {
             let body = "Please order the following:\n\n";
             inventory.forEach(item => {
                 const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days left)\n`;
+                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days)\n`;
             });
-            window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS%204660%20Reorder%20List&body=${encodeURIComponent(body)}`;
+            window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS%204660%20Reorder&body=${encodeURIComponent(body)}`;
         }
 
         function exportReorderList() {
             let text = "UPS 4660 Reorder List\n\n";
             inventory.forEach(item => {
                 const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) text += `${item.name} | ${item.number} | Stock: ${item.stock} | Days Left: ~${days}\n`;
+                if (days < 14) text += `${item.name} | ${item.number} | Stock: ${item.stock} | Days: ~${days}\n`;
             });
             const blob = new Blob([text], {type: 'text/plain'});
             const a = document.createElement('a');
@@ -200,17 +196,17 @@
         }
 
         function toggleChat() {
-            const q = prompt("Ask Adam (OSHA, Teamsters 710, spills, safety, procedures):");
+            const q = prompt("Ask Adam (OSHA, Teamsters, spills, etc):");
             if (!q) return;
-            let reply = "Understood. Can you give more details?";
+            let reply = "Understood. More details?";
             const lower = q.toLowerCase();
-            if (lower.includes("spill") || lower.includes("clean")) reply = "Use Speedi-Dry absorbent. Wear gloves and eye protection. Follow OSHA 1910.120 Hazmat. Ventilate and report.";
-            if (lower.includes("osha")) reply = "Key standards: 1910.120 Hazmat, 1910.147 Lockout/Tagout, PPE. Check UPS safety manual.";
-            if (lower.includes("teamsters") || lower.includes("710")) reply = "Local 710 contract covers seniority, safety rules, hours. Check your contract book.";
+            if (lower.includes("spill")) reply = "Use Speedi-Dry. PPE required. OSHA 1910.120.";
+            if (lower.includes("osha")) reply = "Check 1910.120 Hazmat, PPE, Lockout/Tagout.";
+            if (lower.includes("teamsters")) reply = "Local 710 contract - seniority & safety rules.";
             alert("Ask Adam: " + reply);
         }
 
-        function toggleCamera() {
+        function toggleCamera() { /* same working code as before */ 
             const video = document.getElementById('video');
             const btn = document.getElementById('cameraBtn');
             if (stream) {
@@ -226,18 +222,18 @@
                     video.style.display = 'block';
                     document.getElementById('captureBtn').style.display = 'block';
                     btn.textContent = '❌ Close Camera';
-                }).catch(() => alert("Camera access denied or not available."));
+                }).catch(() => alert("Camera not available."));
             }
         }
 
         function takePhoto() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
             canvas.getContext('2d').drawImage(video, 0, 0);
             canvas.style.display = 'block';
-            alert("Photo captured! You can now describe the issue to Ask Adam.");
+            alert("Photo captured. Use it for safety report.");
         }
 
         function renderContacts() {
@@ -246,17 +242,20 @@
             contacts.forEach((c, i) => {
                 const div = document.createElement('div');
                 div.className = 'contact-card';
-                const photo = c.photo ? `<img src="${c.photo}" class="contact-photo">` : '<div class="contact-photo"></div>';
+                const photoHtml = c.photo ? `<img src="${c.photo}" class="contact-photo">` : '<div class="contact-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>';
                 div.innerHTML = `
-                    ${photo}
-                    <div style="flex:1;">
-                        <strong>${c.firstName} ${c.lastName}</strong><br>
-                        ${c.phones.map(p => `<div>📱 ${p}</div>`).join('')}
-                        ${c.email ? `<div>✉️ ${c.email}</div>` : ''}
+                    <div class="contact-header">
+                        ${photoHtml}
+                        <div style="flex:1;">
+                            <strong>${c.firstName} ${c.lastName}</strong><br>
+                            ${c.phones.map(p => `📱 ${p}`).join('<br>')}
+                            ${c.email ? `✉️ ${c.email}<br>` : ''}
+                            ${c.notes ? `📝 ${c.notes}` : ''}
+                        </div>
                     </div>
-                    <div>
-                        <button onclick="editContact(${i})">Edit</button>
-                        <button onclick="deleteContact(${i})" style="background:#d32f2f;">Delete</button>
+                    <div style="margin-top:10px;">
+                        <button onclick="editContact(${i})" style="width:48%;">Edit</button>
+                        <button onclick="deleteContact(${i})" style="width:48%;background:#d32f2f;">Delete</button>
                     </div>
                 `;
                 list.appendChild(div);
@@ -264,12 +263,13 @@
         }
 
         function addContact() {
-            const first = prompt("First Name:") || "";
-            const last = prompt("Last Name:") || "";
-            const phone = prompt("Primary Phone:") || "";
-            const email = prompt("Email (optional):") || "";
+            const first = prompt("First Name:", "") || "";
+            const last = prompt("Last Name:", "") || "";
+            const phone = prompt("Primary Phone:", "") || "";
+            const email = prompt("Email (optional):", "") || "";
+            const notes = prompt("Notes (optional):", "") || "";
             if (first || last) {
-                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, photo: null});
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: null});
                 saveData();
                 renderContacts();
             }
@@ -281,16 +281,15 @@
             const last = prompt("Last Name:", c.lastName) || c.lastName;
             const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
             const email = prompt("Email:", c.email || "") || "";
-            c.firstName = first; 
-            c.lastName = last; 
-            c.email = email;
+            const notes = prompt("Notes:", c.notes || "") || "";
+            c.firstName = first; c.lastName = last; c.email = email; c.notes = notes;
             if (phone) c.phones[0] = phone;
             saveData();
             renderContacts();
         }
 
         function deleteContact(i) {
-            if (confirm("Delete this contact?")) {
+            if (confirm("Delete contact?")) {
                 contacts.splice(i, 1);
                 saveData();
                 renderContacts();
@@ -303,10 +302,7 @@
             ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach(n => {
                 const btn = document.createElement('button');
                 btn.textContent = n;
-                btn.onclick = () => { 
-                    dialInput += n; 
-                    document.getElementById('dialNumber').value = dialInput; 
-                };
+                btn.onclick = () => { dialInput += n; document.getElementById('dialNumber').value = dialInput; };
                 pad.appendChild(btn);
             });
         }
