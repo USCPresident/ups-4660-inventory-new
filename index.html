@@ -8,9 +8,9 @@
         body { font-family: system-ui, sans-serif; margin:0; background:#f5f5f5; }
         header { background:#2c2c2c; color:#ffcc00; padding:20px; text-align:center; }
         .notice { background:#fff3cd; color:#856404; padding:14px; text-align:center; font-weight:bold; }
-        .tabs { display:flex; background:#2c2c2c; }
-        .tab { flex:1; padding:16px; color:#ffcc00; text-align:center; cursor:pointer; font-size:1.05rem; }
-        .tab.active { background:#ffcc00; color:#2c2c2c; font-weight:bold; }
+        .tabs { display:flex; background:#2c2c2c; border-bottom:3px solid #ffcc00; }
+        .tab { flex:1; padding:18px; color:#ffcc00; text-align:center; cursor:pointer; font-size:1.1rem; font-weight:bold; }
+        .tab.active { background:#ffcc00; color:#2c2c2c; }
         .search { padding:12px; background:white; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
         input[type="text"] { flex:1; min-width:180px; padding:12px; font-size:1.05rem; box-sizing:border-box; }
         .item-card { background:white; margin:10px; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
@@ -21,7 +21,7 @@
         .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
         img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
-        .contact-item { margin:10px 0; padding:10px; background:white; border-radius:8px; }
+        .contact-item { margin:10px 0; padding:12px; background:white; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
     </style>
 </head>
 <body>
@@ -35,8 +35,8 @@
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab(0)">Inventory</div>
-        <div class="tab" onclick="switchTab(1)">Safety Scan</div>
+        <div class="tab active" onclick="switchTab(0)">📦 Inventory</div>
+        <div class="tab" onclick="switchTab(1)">🛡️ Safety Scan</div>
     </div>
 
     <div id="inventoryTab">
@@ -51,14 +51,14 @@
 
     <div id="safetyTab" style="display:none; padding:20px;">
         <h2>Safety Scan</h2>
-        <button onclick="startCamera()" style="margin:10px 0;">📷 Open Camera</button>
-        <video id="video" width="100%" height="auto" autoplay playsinline style="display:none; border-radius:8px;"></video>
-        <canvas id="canvas" style="display:none; border-radius:8px;"></canvas>
-        <button onclick="takePhoto()" style="display:none;" id="captureBtn">Capture Photo</button>
+        <button onclick="toggleCamera()" id="cameraBtn">📷 Open Camera</button>
+        <video id="video" width="100%" height="auto" autoplay playsinline style="display:none; border-radius:8px; margin-top:10px;"></video>
+        <canvas id="canvas" style="display:none; border-radius:8px; margin-top:10px;"></canvas>
+        <button onclick="takePhoto()" style="display:none; margin-top:10px;" id="captureBtn">📸 Capture Photo</button>
 
-        <h3 style="margin-top:20px;">Manager Contacts</h3>
+        <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()">+ Add New Contact</button>
+        <button onclick="addContact()" style="margin-top:10px;">+ Add New Contact</button>
     </div>
 
     <div class="chat-bubble" onclick="toggleChat()">💬</div>
@@ -98,10 +98,9 @@
             {name: "Clear tape 8934 48mm", number: "8934", daily: 2, stock: 8}
         ];
 
-        let contacts = [
-            {name: "Manager 1", phone: "574-555-1234"},
-            {name: "Supervisor A", phone: "574-555-5678"}
-        ];
+        let contacts = [];
+
+        let stream = null;
 
         function loadData() {
             const savedStock = localStorage.getItem('ups4660Inventory');
@@ -200,15 +199,24 @@
             alert("Ask Adam: " + reply);
         }
 
-        let stream;
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-                stream = s;
-                const video = document.getElementById('video');
-                video.srcObject = stream;
-                video.style.display = 'block';
-                document.getElementById('captureBtn').style.display = 'block';
-            }).catch(() => alert("Camera access denied or not available."));
+        function toggleCamera() {
+            const video = document.getElementById('video');
+            const btn = document.getElementById('cameraBtn');
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.style.display = 'none';
+                document.getElementById('captureBtn').style.display = 'none';
+                btn.textContent = '📷 Open Camera';
+            } else {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
+                    stream = s;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    document.getElementById('captureBtn').style.display = 'block';
+                    btn.textContent = '❌ Close Camera';
+                }).catch(() => alert("Camera access denied or not available."));
+            }
         }
 
         function takePhoto() {
@@ -228,9 +236,14 @@
                 const div = document.createElement('div');
                 div.className = 'contact-item';
                 div.innerHTML = `
-                    <strong>${contact.name}</strong><br>
-                    <input type="tel" value="${contact.phone}" onchange="updateContact(${i}, this.value)" placeholder="Phone number">
-                    <button onclick="sendToContact(${i})">Send Message</button>
+                    <div>
+                        <strong>${contact.name}</strong><br>
+                        <input type="tel" value="${contact.phone}" onchange="updateContact(${i}, this.value)" style="width:160px;">
+                    </div>
+                    <div>
+                        <button onclick="sendToContact(${i})">Send Msg</button>
+                        <button onclick="deleteContact(${i})" style="background:#d32f2f; margin-left:5px;">Delete</button>
+                    </div>
                 `;
                 list.appendChild(div);
             });
@@ -239,6 +252,14 @@
         function updateContact(i, phone) {
             contacts[i].phone = phone;
             saveData();
+        }
+
+        function deleteContact(i) {
+            if (confirm("Delete this contact?")) {
+                contacts.splice(i, 1);
+                saveData();
+                renderContacts();
+            }
         }
 
         function addContact() {
