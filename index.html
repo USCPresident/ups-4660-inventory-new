@@ -274,4 +274,80 @@
             input.accept = 'image/*';
             input.onchange = e => {
                 const file = e.target.files[0];
-                if
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        contacts[i].photo = ev.target.result;
+                        saveData();
+                        renderContacts();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function addContact() {
+            if (!confirm("Add new contact?")) return;
+            const first = prompt("First Name:") || "";
+            const last = prompt("Last Name:") || "";
+            const phone = prompt("Primary Phone:") || "";
+            const email = prompt("Email (optional):") || "";
+            const notes = prompt("Notes (optional):") || "";
+            if (first || last || phone) {
+                const randomPhoto = defaultPhotos[Math.floor(Math.random() * defaultPhotos.length)];
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: randomPhoto});
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function editContact(i) {
+            const c = contacts[i];
+            let changed = false;
+            const first = prompt("First Name (current: " + c.firstName + "):", c.firstName);
+            if (first !== null && first !== c.firstName) { c.firstName = first; changed = true; }
+            const last = prompt("Last Name (current: " + c.lastName + "):", c.lastName);
+            if (last !== null && last !== c.lastName) { c.lastName = last; changed = true; }
+            const phone = prompt("Primary Phone (current: " + (c.phones[0] || "") + "):", c.phones[0] || "");
+            if (phone !== null && phone !== c.phones[0]) { c.phones[0] = phone; changed = true; }
+            const email = prompt("Email (current: " + (c.email || "") + "):", c.email || "");
+            if (email !== null && email !== c.email) { c.email = email; changed = true; }
+            const notes = prompt("Notes (current: " + (c.notes || "") + "):", c.notes || "");
+            if (notes !== null && notes !== c.notes) { c.notes = notes; changed = true; }
+            if (changed) {
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function deleteContact(i) {
+            if (confirm("Delete this contact?")) {
+                contacts.splice(i, 1);
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function initDialpad() {
+            const pad = document.getElementById('dialpad');
+            pad.innerHTML = '';
+            ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach(n => {
+                const btn = document.createElement('button');
+                btn.textContent = n;
+                btn.onclick = () => { dialInput += n; document.getElementById('dialNumber').value = dialInput; };
+                pad.appendChild(btn);
+            });
+        }
+
+        function makeCall() {
+            if (dialInput) window.location.href = `tel:${dialInput}`;
+        }
+
+        loadData();
+        renderItems(inventory);
+        renderContacts();
+        initDialpad();
+    </script>
+</body>
+</html>
