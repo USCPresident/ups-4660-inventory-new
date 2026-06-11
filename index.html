@@ -62,7 +62,8 @@
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()" style="width:100%; margin:15px 0;">+ Add New Contact</button>
+        <button onclick="addContact()" style="width:100%; margin:10px 0;">+ Add New Contact</button>
+        <button onclick="manualSave()" style="width:100%; background:#4caf50;">💾 Manual Save Contacts</button>
 
         <h4>Quick Dial Pad</h4>
         <div class="dialpad" id="dialpad"></div>
@@ -77,7 +78,7 @@
     </footer>
 
     <script>
-        let inventory = [ /* full list same as before */ 
+        let inventory = [
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -114,7 +115,8 @@
         const defaultPhotos = [
             "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/UPS_Logo.svg/800px-UPS_Logo.svg.png",
             "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/UPS_truck.jpg/800px-UPS_truck.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/UPS_Brown_Uniform.jpg/800px-UPS_Brown_Uniform.jpg"
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/UPS_Brown_Uniform.jpg/800px-UPS_Brown_Uniform.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/UPS_Delivery_Van.jpg/800px-UPS_Delivery_Van.jpg"
         ];
 
         function loadData() {
@@ -130,11 +132,12 @@
         function saveData() {
             localStorage.setItem('ups4660Inventory', JSON.stringify(inventory));
             localStorage.setItem('ups4660Contacts', JSON.stringify(contacts));
-            // Force sync for mobile
-            console.log("Data saved");
         }
 
-        // renderItems, updateStock, filterItems, copy/email/export, switchTab, toggleChat, toggleCamera, takePhoto, renderContacts, changePhoto, initDialpad, makeCall - same as v21
+        function manualSave() {
+            saveData();
+            alert("✅ Contacts saved successfully!");
+        }
 
         function renderItems(filtered) {
             const container = document.getElementById('itemsContainer');
@@ -181,172 +184,4 @@
             let body = "Please order the following:\n\n";
             inventory.forEach(item => {
                 const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days)\n`;
-            });
-            window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS%204660%20Reorder&body=${encodeURIComponent(body)}`;
-        }
-
-        function exportReorderList() {
-            let text = "UPS 4660 Reorder List\n\n";
-            inventory.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) text += `${item.name} | ${item.number} | Stock: ${item.stock} | Days: ~${days}\n`;
-            });
-            const blob = new Blob([text], {type: 'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'UPS4660_Reorder_List.txt';
-            a.click();
-        }
-
-        function switchTab(n) {
-            document.getElementById('inventoryTab').style.display = n === 0 ? 'block' : 'none';
-            document.getElementById('safetyTab').style.display = n === 1 ? 'block' : 'none';
-            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
-        }
-
-        function toggleChat() {
-            const q = prompt("Ask Adam (OSHA, Teamsters, spills, etc):");
-            if (!q) return;
-            let reply = "Understood. More details?";
-            const lower = q.toLowerCase();
-            if (lower.includes("spill")) reply = "Use Speedi-Dry. PPE required. OSHA 1910.120.";
-            if (lower.includes("osha")) reply = "Check 1910.120 Hazmat, PPE, Lockout/Tagout.";
-            if (lower.includes("teamsters")) reply = "Local 710 contract - seniority & safety rules.";
-            alert("Ask Adam: " + reply);
-        }
-
-        function toggleCamera() {
-            const video = document.getElementById('video');
-            const btn = document.getElementById('cameraBtn');
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-                video.style.display = 'none';
-                document.getElementById('captureBtn').style.display = 'none';
-                btn.textContent = '📷 Open Camera';
-            } else {
-                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
-                    stream = s;
-                    video.srcObject = stream;
-                    video.style.display = 'block';
-                    document.getElementById('captureBtn').style.display = 'block';
-                    btn.textContent = '❌ Close Camera';
-                }).catch(() => alert("Camera not available."));
-            }
-        }
-
-        function takePhoto() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            canvas.style.display = 'block';
-            alert("Photo captured.");
-        }
-
-        function renderContacts() {
-            const list = document.getElementById('contactsList');
-            list.innerHTML = '';
-            contacts.forEach((c, i) => {
-                const div = document.createElement('div');
-                div.className = 'contact-card';
-                const photoHtml = c.photo ? `<img src="${c.photo}" class="contact-photo" onclick="changePhoto(${i})">` : `<div class="contact-photo" onclick="changePhoto(${i})" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
-                div.innerHTML = `
-                    <div class="contact-header">
-                        ${photoHtml}
-                        <div style="flex:1;">
-                            <strong>${c.firstName} ${c.lastName}</strong><br>
-                            ${c.phones.map(p => `📱 ${p}`).join('<br>')}
-                            ${c.email ? `✉️ ${c.email}<br>` : ''}
-                            ${c.notes ? `📝 ${c.notes}` : ''}
-                        </div>
-                    </div>
-                    <div style="margin-top:10px;">
-                        <button onclick="editContact(${i})" style="width:48%;">Edit</button>
-                        <button onclick="deleteContact(${i})" style="width:48%;background:#d32f2f;">Delete</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function changePhoto(i) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                        contacts[i].photo = ev.target.result;
-                        saveData();
-                        renderContacts();
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            input.click();
-        }
-
-        function addContact() {
-            if (!confirm("Add new contact?")) return;
-            const first = prompt("First Name:") || "";
-            const last = prompt("Last Name:") || "";
-            const phone = prompt("Primary Phone:") || "";
-            const email = prompt("Email (optional):") || "";
-            const notes = prompt("Notes (optional):") || "";
-            if (first || last || phone) {
-                const randomPhoto = defaultPhotos[Math.floor(Math.random() * defaultPhotos.length)];
-                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: randomPhoto});
-                saveData();
-                renderContacts();
-                alert("✅ Contact added and saved!");
-            }
-        }
-
-        function editContact(i) {
-            const c = contacts[i];
-            const first = prompt("First Name:", c.firstName) || c.firstName;
-            const last = prompt("Last Name:", c.lastName) || c.lastName;
-            const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
-            const email = prompt("Email:", c.email || "") || "";
-            const notes = prompt("Notes:", c.notes || "") || "";
-            c.firstName = first; c.lastName = last; c.email = email; c.notes = notes;
-            if (phone) c.phones[0] = phone;
-            saveData();
-            renderContacts();
-        }
-
-        function deleteContact(i) {
-            if (confirm("Delete this contact?")) {
-                contacts.splice(i, 1);
-                saveData();
-                renderContacts();
-            }
-        }
-
-        function initDialpad() {
-            const pad = document.getElementById('dialpad');
-            pad.innerHTML = '';
-            ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach(n => {
-                const btn = document.createElement('button');
-                btn.textContent = n;
-                btn.onclick = () => { dialInput += n; document.getElementById('dialNumber').value = dialInput; };
-                pad.appendChild(btn);
-            });
-        }
-
-        function makeCall() {
-            if (dialInput) window.location.href = `tel:${dialInput}`;
-        }
-
-        loadData();
-        renderItems(inventory);
-        renderContacts();
-        initDialpad();
-    </script>
-</body>
-</html>
+               
