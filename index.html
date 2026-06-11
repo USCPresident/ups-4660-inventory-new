@@ -22,7 +22,7 @@
         img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
         .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
         .contact-header { display:flex; align-items:center; gap:12px; }
-        .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; }
+        .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; cursor:pointer; }
         .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:15px 0; }
         .dialpad button { font-size:1.8rem; padding:22px; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
@@ -242,9 +242,10 @@
             contacts.forEach((c, i) => {
                 const div = document.createElement('div');
                 div.className = 'contact-card';
+                const photoHtml = c.photo ? `<img src="${c.photo}" class="contact-photo" onclick="changePhoto(${i})">` : `<div class="contact-photo" onclick="changePhoto(${i})" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>`;
                 div.innerHTML = `
                     <div class="contact-header">
-                        <div class="contact-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>
+                        ${photoHtml}
                         <div style="flex:1;">
                             <strong>${c.firstName} ${c.lastName}</strong><br>
                             ${c.phones.map(p => `📱 ${p}`).join('<br>')}
@@ -261,6 +262,25 @@
             });
         }
 
+        function changePhoto(i) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        contacts[i].photo = ev.target.result;
+                        saveData();
+                        renderContacts();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
         function addContact() {
             const first = prompt("First Name:") || "";
             const last = prompt("Last Name:") || "";
@@ -268,10 +288,9 @@
             const email = prompt("Email (optional):") || "";
             const notes = prompt("Notes (optional):") || "";
             if (first || last || phone) {
-                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes});
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: null});
                 saveData();
                 renderContacts();
-                alert("Contact added! Tap Edit to make changes.");
             }
         }
 
@@ -282,10 +301,7 @@
             const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
             const email = prompt("Email:", c.email || "") || "";
             const notes = prompt("Notes:", c.notes || "") || "";
-            c.firstName = first;
-            c.lastName = last;
-            c.email = email;
-            c.notes = notes;
+            c.firstName = first; c.lastName = last; c.email = email; c.notes = notes;
             if (phone) c.phones[0] = phone;
             saveData();
             renderContacts();
