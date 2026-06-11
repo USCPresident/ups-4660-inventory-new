@@ -62,7 +62,7 @@
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()" style="width:100%; margin:15px 0 10px;">+ Add New Contact</button>
+        <button onclick="addContact()" style="width:100%; margin:15px 0;">+ Add New Contact</button>
 
         <h4>Quick Dial Pad</h4>
         <div class="dialpad" id="dialpad"></div>
@@ -206,7 +206,7 @@
             alert("Ask Adam: " + reply);
         }
 
-        function toggleCamera() { /* same working code as before */ 
+        function toggleCamera() {
             const video = document.getElementById('video');
             const btn = document.getElementById('cameraBtn');
             if (stream) {
@@ -233,7 +233,7 @@
             canvas.height = video.videoHeight || 480;
             canvas.getContext('2d').drawImage(video, 0, 0);
             canvas.style.display = 'block';
-            alert("Photo captured. Use it for safety report.");
+            alert("Photo captured.");
         }
 
         function renderContacts() {
@@ -242,10 +242,9 @@
             contacts.forEach((c, i) => {
                 const div = document.createElement('div');
                 div.className = 'contact-card';
-                const photoHtml = c.photo ? `<img src="${c.photo}" class="contact-photo">` : '<div class="contact-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>';
                 div.innerHTML = `
                     <div class="contact-header">
-                        ${photoHtml}
+                        <div class="contact-photo" style="display:flex;align-items:center;justify-content:center;font-size:40px;">👤</div>
                         <div style="flex:1;">
                             <strong>${c.firstName} ${c.lastName}</strong><br>
                             ${c.phones.map(p => `📱 ${p}`).join('<br>')}
@@ -263,15 +262,16 @@
         }
 
         function addContact() {
-            const first = prompt("First Name:", "") || "";
-            const last = prompt("Last Name:", "") || "";
-            const phone = prompt("Primary Phone:", "") || "";
-            const email = prompt("Email (optional):", "") || "";
-            const notes = prompt("Notes (optional):", "") || "";
-            if (first || last) {
-                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: null});
+            const first = prompt("First Name:") || "";
+            const last = prompt("Last Name:") || "";
+            const phone = prompt("Primary Phone:") || "";
+            const email = prompt("Email (optional):") || "";
+            const notes = prompt("Notes (optional):") || "";
+            if (first || last || phone) {
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes});
                 saveData();
                 renderContacts();
+                alert("Contact added! Tap Edit to make changes.");
             }
         }
 
@@ -282,14 +282,17 @@
             const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
             const email = prompt("Email:", c.email || "") || "";
             const notes = prompt("Notes:", c.notes || "") || "";
-            c.firstName = first; c.lastName = last; c.email = email; c.notes = notes;
+            c.firstName = first;
+            c.lastName = last;
+            c.email = email;
+            c.notes = notes;
             if (phone) c.phones[0] = phone;
             saveData();
             renderContacts();
         }
 
         function deleteContact(i) {
-            if (confirm("Delete contact?")) {
+            if (confirm("Delete this contact?")) {
                 contacts.splice(i, 1);
                 saveData();
                 renderContacts();
