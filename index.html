@@ -114,8 +114,7 @@
         const defaultPhotos = [
             "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/UPS_Logo.svg/800px-UPS_Logo.svg.png",
             "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/UPS_truck.jpg/800px-UPS_truck.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/UPS_Brown_Uniform.jpg/800px-UPS_Brown_Uniform.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/UPS_Delivery_Van.jpg/800px-UPS_Delivery_Van.jpg"
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/UPS_Brown_Uniform.jpg/800px-UPS_Brown_Uniform.jpg"
         ];
 
         function loadData() {
@@ -289,21 +288,60 @@
         }
 
         function addContact() {
-            if (!confirm("Start adding a new contact?")) return;
-
+            if (!confirm("Add new contact?")) return;
             const first = prompt("First Name:") || "";
-            if (!first && !confirm("No first name. Continue?")) return;
-
             const last = prompt("Last Name:") || "";
             const phone = prompt("Primary Phone:") || "";
             const email = prompt("Email (optional):") || "";
             const notes = prompt("Notes (optional):") || "";
-
-            const photoIndex = Math.floor(Math.random() * defaultPhotos.length);
-            const defaultPhoto = defaultPhotos[photoIndex];
-
             if (first || last || phone) {
-                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: defaultPhoto});
+                const randomPhoto = defaultPhotos[Math.floor(Math.random() * defaultPhotos.length)];
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, notes, photo: randomPhoto});
                 saveData();
                 renderContacts();
-                alert("✅ Contact added successfully
+            }
+        }
+
+        function editContact(i) {
+            const c = contacts[i];
+            const first = prompt("First Name:", c.firstName) || c.firstName;
+            const last = prompt("Last Name:", c.lastName) || c.lastName;
+            const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
+            const email = prompt("Email:", c.email || "") || "";
+            const notes = prompt("Notes:", c.notes || "") || "";
+            c.firstName = first; c.lastName = last; c.email = email; c.notes = notes;
+            if (phone) c.phones[0] = phone;
+            saveData();
+            renderContacts();
+        }
+
+        function deleteContact(i) {
+            if (confirm("Delete this contact?")) {
+                contacts.splice(i, 1);
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function initDialpad() {
+            const pad = document.getElementById('dialpad');
+            pad.innerHTML = '';
+            ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach(n => {
+                const btn = document.createElement('button');
+                btn.textContent = n;
+                btn.onclick = () => { dialInput += n; document.getElementById('dialNumber').value = dialInput; };
+                pad.appendChild(btn);
+            });
+        }
+
+        function makeCall() {
+            if (dialInput) window.location.href = `tel:${dialInput}`;
+        }
+
+        loadData();
+        renderItems(inventory);
+        renderContacts();
+        initDialpad();
+    </script>
+</body>
+</html>
