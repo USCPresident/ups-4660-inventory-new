@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>UPS 4660 Housekeeping Inventory</title>
     <style>
         body { font-family: system-ui, sans-serif; margin:0; background:#f5f5f5; }
@@ -16,12 +16,15 @@
         .item-card { background:white; margin:10px; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); border-left:6px solid #4caf50; }
         .item-card.urgent { border-left-color: #f44336; }
         .stock-input { width:85px !important; text-align:center; font-size:1.1rem; padding:8px; border:2px solid #ccc; border-radius:6px; }
-        button { padding:12px 16px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; min-width:140px; }
-        button:hover { background:#1565c0; }
+        button { padding:14px 18px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem; min-width:140px; margin:4px 2px; }
+        button:active { background:#1565c0; }
         .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:65px; height:65px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
         img { max-width:100%; max-height:180px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
+        .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); display:flex; gap:12px; align-items:center; }
+        .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; }
+        .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin:15px 0; }
+        .dialpad button { font-size:1.8rem; padding:20px; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
-        .contact-item { margin:10px 0; padding:12px; background:white; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
     </style>
 </head>
 <body>
@@ -51,14 +54,19 @@
 
     <div id="safetyTab" style="display:none; padding:20px;">
         <h2>Safety Scan</h2>
-        <button onclick="toggleCamera()" id="cameraBtn">📷 Open Camera</button>
-        <video id="video" width="100%" height="auto" autoplay playsinline style="display:none; border-radius:8px; margin-top:10px;"></video>
-        <canvas id="canvas" style="display:none; border-radius:8px; margin-top:10px;"></canvas>
-        <button onclick="takePhoto()" style="display:none; margin-top:10px;" id="captureBtn">📸 Capture Photo</button>
+        <button onclick="toggleCamera()" id="cameraBtn" style="width:100%;">📷 Open Camera</button>
+        <video id="video" width="100%" autoplay playsinline style="display:none; border-radius:8px; margin:10px 0;"></video>
+        <canvas id="canvas" style="display:none; border-radius:8px; margin:10px 0;"></canvas>
+        <button onclick="takePhoto()" style="display:none; width:100%;" id="captureBtn">📸 Capture Photo</button>
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()" style="margin-top:10px;">+ Add New Contact</button>
+        <button onclick="addContact()" style="width:100%; margin:15px 0;">+ Add New Contact</button>
+
+        <h4>Quick Dial Pad</h4>
+        <div class="dialpad" id="dialpad"></div>
+        <input type="tel" id="dialNumber" placeholder="Phone number" style="width:100%; padding:12px; font-size:1.2rem;" readonly>
+        <button onclick="makeCall()" style="width:100%;">📞 Call</button>
     </div>
 
     <div class="chat-bubble" onclick="toggleChat()">💬</div>
@@ -99,8 +107,8 @@
         ];
 
         let contacts = [];
-
         let stream = null;
+        let dialInput = '';
 
         function loadData() {
             const savedStock = localStorage.getItem('ups4660Inventory');
@@ -147,7 +155,10 @@
 
         function filterItems() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = inventory.filter(item => item.name.toLowerCase().includes(term) || item.number.toLowerCase().includes(term));
+            const filtered = inventory.filter(item => 
+                item.name.toLowerCase().includes(term) || 
+                item.number.toLowerCase().includes(term)
+            );
             renderItems(filtered.length ? filtered : inventory);
         }
 
@@ -232,26 +243,50 @@
         function renderContacts() {
             const list = document.getElementById('contactsList');
             list.innerHTML = '';
-            contacts.forEach((contact, i) => {
+            contacts.forEach((c, i) => {
                 const div = document.createElement('div');
-                div.className = 'contact-item';
+                div.className = 'contact-card';
+                const photo = c.photo ? `<img src="${c.photo}" class="contact-photo">` : '<div class="contact-photo"></div>';
                 div.innerHTML = `
-                    <div>
-                        <strong>${contact.name}</strong><br>
-                        <input type="tel" value="${contact.phone}" onchange="updateContact(${i}, this.value)" style="width:160px;">
+                    ${photo}
+                    <div style="flex:1;">
+                        <strong>${c.firstName} ${c.lastName}</strong><br>
+                        ${c.phones.map(p => `<div>📱 ${p}</div>`).join('')}
+                        ${c.email ? `<div>✉️ ${c.email}</div>` : ''}
                     </div>
                     <div>
-                        <button onclick="sendToContact(${i})">Send Msg</button>
-                        <button onclick="deleteContact(${i})" style="background:#d32f2f; margin-left:5px;">Delete</button>
+                        <button onclick="editContact(${i})">Edit</button>
+                        <button onclick="deleteContact(${i})" style="background:#d32f2f;">Delete</button>
                     </div>
                 `;
                 list.appendChild(div);
             });
         }
 
-        function updateContact(i, phone) {
-            contacts[i].phone = phone;
+        function addContact() {
+            const first = prompt("First Name:") || "";
+            const last = prompt("Last Name:") || "";
+            const phone = prompt("Primary Phone:") || "";
+            const email = prompt("Email (optional):") || "";
+            if (first || last) {
+                contacts.push({firstName: first, lastName: last, phones: phone ? [phone] : [], email, photo: null});
+                saveData();
+                renderContacts();
+            }
+        }
+
+        function editContact(i) {
+            const c = contacts[i];
+            const first = prompt("First Name:", c.firstName) || c.firstName;
+            const last = prompt("Last Name:", c.lastName) || c.lastName;
+            const phone = prompt("Primary Phone:", c.phones[0] || "") || "";
+            const email = prompt("Email:", c.email || "") || "";
+            c.firstName = first; 
+            c.lastName = last; 
+            c.email = email;
+            if (phone) c.phones[0] = phone;
             saveData();
+            renderContacts();
         }
 
         function deleteContact(i) {
@@ -262,28 +297,28 @@
             }
         }
 
-        function addContact() {
-            const name = prompt("Manager/Supervisor Name:");
-            if (!name) return;
-            const phone = prompt("Phone number:");
-            if (phone) {
-                contacts.push({name, phone});
-                saveData();
-                renderContacts();
-            }
+        function initDialpad() {
+            const pad = document.getElementById('dialpad');
+            pad.innerHTML = '';
+            ['1','2','3','4','5','6','7','8','9','*','0','#'].forEach(n => {
+                const btn = document.createElement('button');
+                btn.textContent = n;
+                btn.onclick = () => { 
+                    dialInput += n; 
+                    document.getElementById('dialNumber').value = dialInput; 
+                };
+                pad.appendChild(btn);
+            });
         }
 
-        function sendToContact(i) {
-            const contact = contacts[i];
-            const msg = prompt("Message to send to " + contact.name + ":");
-            if (msg) {
-                window.location.href = `sms:${contact.phone}?body=${encodeURIComponent(msg)}`;
-            }
+        function makeCall() {
+            if (dialInput) window.location.href = `tel:${dialInput}`;
         }
 
         loadData();
         renderItems(inventory);
         renderContacts();
+        initDialpad();
     </script>
 </body>
 </html>
