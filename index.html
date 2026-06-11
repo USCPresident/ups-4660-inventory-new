@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,8 +23,6 @@
         .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
         .contact-header { display:flex; align-items:center; gap:12px; }
         .contact-photo { width:80px; height:80px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; cursor:pointer; }
-        .dialpad { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin:15px 0; }
-        .dialpad button { font-size:1.8rem; padding:22px; }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
 </head>
@@ -64,6 +62,7 @@
         <div id="contactsList"></div>
         <button onclick="addContact()" style="width:100%; margin:10px 0;">+ Add New Contact</button>
         <button onclick="manualSave()" style="width:100%; background:#4caf50; margin-bottom:10px;">💾 Manual Save Contacts</button>
+        <button onclick="showStored()" style="width:100%; background:#ff9800;">🔍 Show Stored Data</button>
 
         <h4>Quick Dial Pad</h4>
         <div class="dialpad" id="dialpad"></div>
@@ -78,7 +77,7 @@
     </footer>
 
     <script>
-        let inventory = [
+        let inventory = [ /* full list */ 
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -135,7 +134,11 @@
 
         function manualSave() {
             saveData();
-            alert("✅ Contacts saved successfully! Refresh the page if needed.");
+            alert("✅ Contacts saved! Pull down to refresh the page.");
+        }
+
+        function showStored() {
+            alert("Stored Contacts: " + JSON.stringify(contacts, null, 2));
         }
 
         function renderItems(filtered) {
