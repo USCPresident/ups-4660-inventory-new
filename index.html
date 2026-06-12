@@ -70,7 +70,7 @@
     </footer>
 
     <script>
-        let inventory = [
+        let inventory = [ /* full list */ 
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -144,37 +144,6 @@
             renderItems(filtered.length ? filtered : inventory);
         }
 
-        function copyReorderList() {
-            let text = "UPS 4660 Reorder List\n\n";
-            inventory.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) text += `${item.name} (${item.number}) - Stock: ${item.stock} (~${days} days)\n`;
-            });
-            navigator.clipboard.writeText(text).then(() => alert("✅ Copied!"));
-        }
-
-        function emailReorderList() {
-            let body = "Please order the following:\n\n";
-            inventory.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) body += `${item.name} - ${item.number} (Stock: ${item.stock}, ~${days} days)\n`;
-            });
-            window.location.href = `mailto:president@unitedstylescrew.com?subject=UPS%204660%20Reorder&body=${encodeURIComponent(body)}`;
-        }
-
-        function exportReorderList() {
-            let text = "UPS 4660 Reorder List\n\n";
-            inventory.forEach(item => {
-                const days = (item.stock / item.daily).toFixed(1);
-                if (days < 14) text += `${item.name} | ${item.number} | Stock: ${item.stock} | Days: ~${days}\n`;
-            });
-            const blob = new Blob([text], {type: 'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'UPS4660_Reorder_List.txt';
-            a.click();
-        }
-
         function switchTab(n) {
             document.getElementById('inventoryTab').style.display = n === 0 ? 'block' : 'none';
             document.getElementById('safetyTab').style.display = n === 1 ? 'block' : 'none';
@@ -225,16 +194,16 @@
             document.getElementById('captureBtn').style.display = 'none';
             document.getElementById('discardBtn').style.display = 'block';
             document.getElementById('saveGalleryBtn').style.display = 'block';
-            showSendOptions();
+            alert("Photo captured!\n\nNext: Tap 'Save Photo to Gallery' then attach it manually in Messages.");
         }
 
         function savePhotoToGallery() {
             if (capturedPhoto) {
                 const link = document.createElement('a');
                 link.href = capturedPhoto;
-                link.download = 'UPS_Safety_Photo_' + new Date().toISOString().slice(0,16).replace(/:/g,'-') + '.jpg';
+                link.download = 'UPS_Issue_' + new Date().toISOString().slice(0,16).replace(/:/g, '-') + '.jpg';
                 link.click();
-                alert("Photo saved to Downloads. Open Files app → Downloads → tap photo → Share → Messages to attach.");
+                alert("✅ Photo saved to Downloads!\n\n1. Open Files app → Downloads\n2. Tap the photo\n3. Tap Share → Messages\n4. Choose contact and send");
             }
         }
 
@@ -244,37 +213,6 @@
             document.getElementById('captureBtn').style.display = 'block';
             document.getElementById('discardBtn').style.display = 'none';
             document.getElementById('saveGalleryBtn').style.display = 'none';
-        }
-
-        function showSendOptions() {
-            const msg = prompt("Describe the issue (e.g. 'Water spill on keyboard in breakroom'):");
-            if (msg === null) {
-                discardPhoto();
-                return;
-            }
-
-            let selector = "Send to which contact?\n\n";
-            contacts.forEach((c, i) => {
-                selector += `${i}: ${c.name} (${c.phone})\n`;
-            });
-            selector += "\nType 'cancel' to discard";
-
-            const choice = prompt(selector);
-            if (choice === null || choice.toLowerCase() === 'cancel') {
-                discardPhoto();
-                return;
-            }
-
-            const i = parseInt(choice);
-            if (contacts[i]) {
-                const body = msg + "\n\n[Photo attached - open from Downloads or Camera Roll]";
-                window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(body)}`;
-                alert("✅ SMS opened.\n\n1. Tap the photo icon in Messages\n2. Choose the photo you just saved\n3. Send");
-                discardPhoto();
-            } else {
-                alert("Invalid choice.");
-                discardPhoto();
-            }
         }
 
         function renderContacts() {
