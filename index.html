@@ -19,7 +19,7 @@
         button { padding:16px 20px; background:#1976d2; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1.05rem; min-width:140px; margin:6px 4px; }
         button:active { background:#1565c0; }
         .chat-bubble { position:fixed; bottom:20px; right:20px; background:#1976d2; color:white; width:70px; height:70px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 6px 16px rgba(0,0,0,0.3); z-index:1000; cursor:pointer; }
-        img { max-width:100%; max-height:220px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
+        img { max-width:100%; max-height:240px; height:auto; border-radius:8px; margin-top:8px; object-fit:contain; }
         .contact-card { background:white; margin:12px 0; padding:16px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
         footer { text-align:center; padding:15px; color:#666; font-size:0.9rem; }
     </style>
@@ -56,6 +56,7 @@
         <canvas id="canvas" style="display:none; border-radius:8px; margin:10px 0;"></canvas>
         <button onclick="takePhoto()" style="display:none; width:100%;" id="captureBtn">📸 Capture Photo</button>
         <button onclick="discardPhoto()" id="discardBtn" style="display:none; width:100%; background:#f44336; margin-top:8px;">🗑 Discard Photo</button>
+        <button onclick="savePhotoToGallery()" id="saveGalleryBtn" style="display:none; width:100%; background:#4caf50; margin-top:8px;">💾 Save Photo to Gallery</button>
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
@@ -69,7 +70,7 @@
     </footer>
 
     <script>
-        let inventory = [ /* full inventory */ 
+        let inventory = [
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -200,6 +201,7 @@
                 video.style.display = 'none';
                 document.getElementById('captureBtn').style.display = 'none';
                 document.getElementById('discardBtn').style.display = 'none';
+                document.getElementById('saveGalleryBtn').style.display = 'none';
                 btn.textContent = '📷 Open Camera';
             } else {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
@@ -207,7 +209,6 @@
                     video.srcObject = stream;
                     video.style.display = 'block';
                     document.getElementById('captureBtn').style.display = 'block';
-                    document.getElementById('discardBtn').style.display = 'block';
                     btn.textContent = '❌ Close Camera';
                 }).catch(() => alert("Camera not available."));
             }
@@ -219,11 +220,22 @@
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
+            capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
             canvas.style.display = 'block';
             document.getElementById('captureBtn').style.display = 'none';
             document.getElementById('discardBtn').style.display = 'block';
-            showContactSelector();
+            document.getElementById('saveGalleryBtn').style.display = 'block';
+            showSendOptions();
+        }
+
+        function savePhotoToGallery() {
+            if (capturedPhoto) {
+                const link = document.createElement('a');
+                link.href = capturedPhoto;
+                link.download = 'UPS_Safety_Photo_' + new Date().toISOString().slice(0,16).replace(/:/g,'-') + '.jpg';
+                link.click();
+                alert("Photo saved to Downloads. Open Files app → Downloads → tap photo → Share → Messages to attach.");
+            }
         }
 
         function discardPhoto() {
@@ -231,28 +243,33 @@
             document.getElementById('canvas').style.display = 'none';
             document.getElementById('captureBtn').style.display = 'block';
             document.getElementById('discardBtn').style.display = 'none';
+            document.getElementById('saveGalleryBtn').style.display = 'none';
         }
 
-        function showContactSelector() {
-            if (contacts.length === 0) {
-                alert("No contacts yet. Add some first.");
+        function showSendOptions() {
+            const msg = prompt("Describe the issue (e.g. 'Water spill on keyboard in breakroom'):");
+            if (msg === null) {
                 discardPhoto();
                 return;
             }
-            let selector = "Choose contact to send photo to:\n\n";
+
+            let selector = "Send to which contact?\n\n";
             contacts.forEach((c, i) => {
                 selector += `${i}: ${c.name} (${c.phone})\n`;
             });
-            const choice = prompt(selector + "\n\nOr type 'cancel'");
+            selector += "\nType 'cancel' to discard";
+
+            const choice = prompt(selector);
             if (choice === null || choice.toLowerCase() === 'cancel') {
                 discardPhoto();
                 return;
             }
+
             const i = parseInt(choice);
             if (contacts[i]) {
-                const msg = prompt("Message to send with photo:");
-                const body = (msg || "Photo of issue") + "\n\n[Photo attached]";
+                const body = msg + "\n\n[Photo attached - open from Downloads or Camera Roll]";
                 window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(body)}`;
+                alert("✅ SMS opened.\n\n1. Tap the photo icon in Messages\n2. Choose the photo you just saved\n3. Send");
                 discardPhoto();
             } else {
                 alert("Invalid choice.");
