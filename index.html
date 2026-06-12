@@ -55,6 +55,7 @@
         <video id="video" width="100%" autoplay playsinline style="display:none; border-radius:8px; margin:10px 0;"></video>
         <canvas id="canvas" style="display:none; border-radius:8px; margin:10px 0;"></canvas>
         <button onclick="takePhoto()" style="display:none; width:100%;" id="captureBtn">📸 Capture Photo</button>
+        <button onclick="discardPhoto()" id="discardBtn" style="display:none; width:100%; background:#f44336; margin-top:8px;">🗑 Discard Photo</button>
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
@@ -70,7 +71,7 @@
     </footer>
 
     <script>
-        let inventory = [
+        let inventory = [ /* full list as before */ 
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -210,6 +211,7 @@
                 stream = null;
                 video.style.display = 'none';
                 document.getElementById('captureBtn').style.display = 'none';
+                document.getElementById('discardBtn').style.display = 'none';
                 btn.textContent = '📷 Open Camera';
             } else {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(s => {
@@ -217,8 +219,9 @@
                     video.srcObject = stream;
                     video.style.display = 'block';
                     document.getElementById('captureBtn').style.display = 'block';
+                    document.getElementById('discardBtn').style.display = 'block';
                     btn.textContent = '❌ Close Camera';
-                }).catch(() => alert("Camera access denied or not available on this device."));
+                }).catch(() => alert("Camera not available."));
             }
         }
 
@@ -230,18 +233,43 @@
             canvas.getContext('2d').drawImage(video, 0, 0);
             capturedPhoto = canvas.toDataURL('image/jpeg', 0.8);
             canvas.style.display = 'block';
-            const msg = prompt("Add message for this photo (e.g. 'Hazardous spill in breakroom'):");
-            if (msg) {
-                const contactIndex = prompt("Enter contact number (0 for first contact, etc):");
-                if (contactIndex !== null) {
-                    const i = parseInt(contactIndex);
-                    if (contacts[i]) {
-                        const smsBody = msg + "\n\n[Photo attached - describe issue here]";
-                        window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(smsBody)}`;
-                    } else {
-                        alert("Contact not found. Photo captured.");
-                    }
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('discardBtn').style.display = 'block';
+            showContactSelector();
+        }
+
+        function discardPhoto() {
+            capturedPhoto = null;
+            document.getElementById('canvas').style.display = 'none';
+            document.getElementById('captureBtn').style.display = 'block';
+            document.getElementById('discardBtn').style.display = 'none';
+        }
+
+        function showContactSelector() {
+            if (contacts.length === 0) {
+                alert("No contacts. Add some first.");
+                discardPhoto();
+                return;
+            }
+            let msg = prompt("Add message for this photo:");
+            if (msg === null) {
+                discardPhoto();
+                return;
+            }
+            let selector = "Choose contact to send to:\n\n";
+            contacts.forEach((c, i) => {
+                selector += `${i}: ${c.name} (${c.phone})\n`;
+            });
+            const choice = prompt(selector);
+            if (choice !== null) {
+                const i = parseInt(choice);
+                if (contacts[i]) {
+                    const body = msg + "\n\n[Photo of issue attached]";
+                    window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(body)}`;
+                    discardPhoto();
                 }
+            } else {
+                discardPhoto();
             }
         }
 
