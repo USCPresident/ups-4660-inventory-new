@@ -59,9 +59,7 @@
 
         <h3 style="margin-top:25px;">Manager Contacts</h3>
         <div id="contactsList"></div>
-        <button onclick="addContact()" style="width:100%; margin:10px 0;">+ Add New Contact</button>
-        <button onclick="manualSave()" style="width:100%; background:#4caf50; margin-bottom:10px;">💾 Manual Save & Refresh</button>
-        <button onclick="refreshContacts()" style="width:100%; background:#2196f3;">🔄 Refresh List</button>
+        <button onclick="addContact()" style="width:100%; margin:15px 0;">+ Add New Contact</button>
     </div>
 
     <div class="chat-bubble" onclick="toggleChat()">💬</div>
@@ -71,7 +69,7 @@
     </footer>
 
     <script>
-        let inventory = [ /* full list as before */ 
+        let inventory = [ /* full inventory */ 
             {name: "GEORGIA-PACIFIC Paper Towel Roll Brown (Women's & Men's)", number: "143407 / 2U232", daily: 6, stock: 3, image: "https://static.grainger.com/rp/s/is/image/Grainger/2U232_AW01?$adapimg$"},
             {name: "SCOTT Toilet Paper Roll 2 Ply", number: "142200 / 42EN65", daily: 8, stock: 5, image: "https://static.grainger.com/rp/s/is/image/Grainger/67805_P01__ZXNX_v1?$adapimg$"},
             {name: "GOJO Hand Wash Series LTX-12 1200 mL Foam", number: "1911-02 / 15E819", daily: 2, stock: 6},
@@ -112,16 +110,6 @@
 
         function saveData() {
             localStorage.setItem('ups4660Contacts', JSON.stringify(contacts));
-        }
-
-        function manualSave() {
-            saveData();
-            renderContacts();
-            alert("✅ Saved!");
-        }
-
-        function refreshContacts() {
-            renderContacts();
         }
 
         function renderItems(filtered) {
@@ -247,28 +235,27 @@
 
         function showContactSelector() {
             if (contacts.length === 0) {
-                alert("No contacts. Add some first.");
+                alert("No contacts yet. Add some first.");
                 discardPhoto();
                 return;
             }
-            let msg = prompt("Add message for this photo:");
-            if (msg === null) {
-                discardPhoto();
-                return;
-            }
-            let selector = "Choose contact to send to:\n\n";
+            let selector = "Choose contact to send photo to:\n\n";
             contacts.forEach((c, i) => {
                 selector += `${i}: ${c.name} (${c.phone})\n`;
             });
-            const choice = prompt(selector);
-            if (choice !== null) {
-                const i = parseInt(choice);
-                if (contacts[i]) {
-                    const body = msg + "\n\n[Photo of issue attached]";
-                    window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(body)}`;
-                    discardPhoto();
-                }
+            const choice = prompt(selector + "\n\nOr type 'cancel'");
+            if (choice === null || choice.toLowerCase() === 'cancel') {
+                discardPhoto();
+                return;
+            }
+            const i = parseInt(choice);
+            if (contacts[i]) {
+                const msg = prompt("Message to send with photo:");
+                const body = (msg || "Photo of issue") + "\n\n[Photo attached]";
+                window.location.href = `sms:${contacts[i].phone}?body=${encodeURIComponent(body)}`;
+                discardPhoto();
             } else {
+                alert("Invalid choice.");
                 discardPhoto();
             }
         }
